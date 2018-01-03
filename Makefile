@@ -181,6 +181,21 @@ hokuyo_processing/fast:
 .PHONY : hokuyo_processing/fast
 
 # Convenience name for target.
+hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/rule:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f CMakeFiles/Makefile2 hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/rule
+.PHONY : hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/rule
+
+# Convenience name for target.
+hokuyoLibrary: hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/rule
+
+.PHONY : hokuyoLibrary
+
+# fast build rule for target.
+hokuyoLibrary/fast:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build
+.PHONY : hokuyoLibrary/fast
+
+# Convenience name for target.
 hokuyo_processing/CMakeFiles/std_srvs_generate_messages_cpp.dir/rule:
 	cd /home/kyrie/catkin_ws/src && $(MAKE) -f CMakeFiles/Makefile2 hokuyo_processing/CMakeFiles/std_srvs_generate_messages_cpp.dir/rule
 .PHONY : hokuyo_processing/CMakeFiles/std_srvs_generate_messages_cpp.dir/rule
@@ -735,6 +750,60 @@ geometry_msgs_generate_messages_py/fast:
 	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/geometry_msgs_generate_messages_py.dir/build.make hokuyo_processing/CMakeFiles/geometry_msgs_generate_messages_py.dir/build
 .PHONY : geometry_msgs_generate_messages_py/fast
 
+src/Cluster.o: src/Cluster.cpp.o
+
+.PHONY : src/Cluster.o
+
+# target to build an object file
+src/Cluster.cpp.o:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Cluster.cpp.o
+.PHONY : src/Cluster.cpp.o
+
+src/Cluster.i: src/Cluster.cpp.i
+
+.PHONY : src/Cluster.i
+
+# target to preprocess a source file
+src/Cluster.cpp.i:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Cluster.cpp.i
+.PHONY : src/Cluster.cpp.i
+
+src/Cluster.s: src/Cluster.cpp.s
+
+.PHONY : src/Cluster.s
+
+# target to generate assembly for a file
+src/Cluster.cpp.s:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Cluster.cpp.s
+.PHONY : src/Cluster.cpp.s
+
+src/Point.o: src/Point.cpp.o
+
+.PHONY : src/Point.o
+
+# target to build an object file
+src/Point.cpp.o:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Point.cpp.o
+.PHONY : src/Point.cpp.o
+
+src/Point.i: src/Point.cpp.i
+
+.PHONY : src/Point.i
+
+# target to preprocess a source file
+src/Point.cpp.i:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Point.cpp.i
+.PHONY : src/Point.cpp.i
+
+src/Point.s: src/Point.cpp.s
+
+.PHONY : src/Point.s
+
+# target to generate assembly for a file
+src/Point.cpp.s:
+	cd /home/kyrie/catkin_ws/src && $(MAKE) -f hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/build.make hokuyo_processing/CMakeFiles/hokuyoLibrary.dir/src/Point.cpp.s
+.PHONY : src/Point.cpp.s
+
 src/hokuyo_processing.o: src/hokuyo_processing.cpp.o
 
 .PHONY : src/hokuyo_processing.o
@@ -770,8 +839,9 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... test"
-	@echo "... install/local"
 	@echo "... hokuyo_processing"
+	@echo "... install/local"
+	@echo "... hokuyoLibrary"
 	@echo "... std_srvs_generate_messages_cpp"
 	@echo "... bond_generate_messages_nodejs"
 	@echo "... bond_generate_messages_lisp"
@@ -813,6 +883,12 @@ help:
 	@echo "... geometry_msgs_generate_messages_nodejs"
 	@echo "... std_srvs_generate_messages_eus"
 	@echo "... geometry_msgs_generate_messages_py"
+	@echo "... src/Cluster.o"
+	@echo "... src/Cluster.i"
+	@echo "... src/Cluster.s"
+	@echo "... src/Point.o"
+	@echo "... src/Point.i"
+	@echo "... src/Point.s"
 	@echo "... src/hokuyo_processing.o"
 	@echo "... src/hokuyo_processing.i"
 	@echo "... src/hokuyo_processing.s"

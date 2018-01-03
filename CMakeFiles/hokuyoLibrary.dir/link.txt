@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -g  -shared -Wl,-soname,libhokuyoLibrary.so -o /home/kyrie/catkin_ws/devel/lib/libhokuyoLibrary.so CMakeFiles/hokuyoLibrary.dir/src/Point.cpp.o CMakeFiles/hokuyoLibrary.dir/src/Cluster.cpp.o 

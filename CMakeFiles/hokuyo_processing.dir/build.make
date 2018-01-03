@@ -129,6 +129,7 @@ hokuyo_processing_EXTERNAL_OBJECTS =
 /home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing: /usr/lib/x86_64-linux-gnu/libpthread.so
 /home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
 /home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing: /opt/ros/kinetic/lib/libliburg_c.so
+/home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing: /home/kyrie/catkin_ws/devel/lib/libhokuyoLibrary.so
 /home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing: hokuyo_processing/CMakeFiles/hokuyo_processing.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/kyrie/catkin_ws/src/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable /home/kyrie/catkin_ws/devel/lib/hokuyo_processing/hokuyo_processing"
 	cd /home/kyrie/catkin_ws/src/hokuyo_processing && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/hokuyo_processing.dir/link.txt --verbose=$(VERBOSE)

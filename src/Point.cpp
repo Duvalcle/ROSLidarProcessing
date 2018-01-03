@@ -17,7 +17,7 @@ float Point::getY(){
   return y;
 }
 
-float Point::getDistance(Point point){
+double Point::getDistance(Point point){
   return sqrt(pow((this->x - point.x),2)+pow((this->y - point.y),2));
 }
 
@@ -28,3 +28,8 @@ int Point::getIDCluster(){
 void Point::setIDCluster(int id){
   this->id_cluster = id;
 }
+
+/*std::string Point::to_String(){
+  string result = "("<< this->x << " ; " << this->y <<" )"
+  return result;
+}*/

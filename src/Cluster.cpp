@@ -15,7 +15,12 @@ Cluster::Cluster(int id_cluster, Point point)
 
 void Cluster::addPoint(Point point){
   points.push_back(point);
-      //TODO set circleCenter form extrapolation of points
+  int size = points.size();
+  int median = size/2;
+  //Update de center of the cluster.
+  // To adapt for further version
+  circleCenter = points[median];
+  rayon = points[0].getDistance(points[points.size()-1]);
   }
 
 bool Cluster::removePoint(int id_point){
@@ -37,9 +42,13 @@ int Cluster::getTotalNBPoints(){
 }
 
 Point Cluster::getLastAddedPoint(){
-  return points[points.size()];
+  return points[points.size()-1];
 }
 
 int Cluster::getID(){
   return id_cluster;
+}
+
+double Cluster::getRayon(){
+  return rayon;
 }

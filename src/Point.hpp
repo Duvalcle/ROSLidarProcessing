@@ -9,8 +9,9 @@ public:
   Point(float x, float y, int id);
   float getX();
   float getY();
-  float getDistance(Point point);
+  double getDistance(Point point);
   int getIDCluster();
   void setIDCluster(int id);
+	//std::string Point::to_String();
 };
 #endif

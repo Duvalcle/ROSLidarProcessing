@@ -18,11 +18,12 @@ public:
   int getTotalNBPoints();
   Point getLastAddedPoint();
   int getID();
+  double getRayon();
 
 private:
 	vector<Point> points;
 	Point circleCenter;
 	int id_cluster;
-
+  double rayon;
 };
 #endif

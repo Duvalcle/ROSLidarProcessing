@@ -18,38 +18,53 @@ using namespace std;
 //Pour la table de jeu, sizeCutX = 2050 et sizeCutY = 3050
 void changementRepere(vector<Cluster> data,const sensor_msgs::LaserScan& msg, float sizeCutX, float sizeCutY){
   //string chaine;
-	float dist;
-  float epsilon = 0.1; //tolerance for distance to integrate in the cluster
+	double dist;
+  float epsilon = 0.05; //tolerance for distance to integrate in the cluster
   int lastCluster = 0;//id of the last used cluster
-  ROS_INFO_STREAM("range min : "<<msg.range_min);
-  ROS_INFO_STREAM("angle_increment : "<<msg.angle_increment);
-  ROS_INFO_STREAM("float type range : "<<typeid(msg.ranges[0]).name());
+  // ROS_INFO_STREAM("range min : "<<msg.range_min);
+  // ROS_INFO_STREAM("angle_increment : "<<msg.angle_increment);
+  // ROS_INFO_STREAM("float type range : "<<typeid(msg.ranges[0]).name());
   float angle = msg.angle_min;
   int rows = msg.ranges.size();
   Cluster cluster0 = Cluster(0, Point(0,0,0));
+	data.push_back(cluster0);
 	Point pointNull = Point(0,0,0);
 	//sizeof(msg.ranges)/sizeof(msg.ranges[0])
   for (int i = 0; i < rows ; i++){
     // Transformation repère
+		//ROS_INFO_STREAM("Test : "<< i << " Rows : " << rows);
     angle = angle +  (float) msg.angle_increment;
-    float x = msg.ranges[i] * std::cos(angle) + sizeCutX/2 - 0.050; // reposition du repère
+    float x = msg.ranges[i] * std::cos(angle);// + sizeCutX/2 - 0.050; // reposition du repère
     float y = msg.ranges[i] * std::sin(angle); // reposition du repère
+		//ROS_INFO_STREAM("OK1");
 
     // Si point en dehors map, supprimer (mise à 0 dans cluster0)
-    if (x > sizeCutX || x < 0 || y < 0 || y > sizeCutY){
+    if (x > sizeCutX || x < -sizeCutX || y < -sizeCutX || y > sizeCutY){
       //tableau_donnees[i][0] = 0;
       //tableau_donnees[i][1] = 0;
       data[0].addPoint(pointNull);
+			//ROS_INFO_STREAM("OK2");
     }
     else{
       Point current = Point(x,y,0);
-      dist = current.getDistance(data[lastCluster].getLastAddedPoint());
+			Point oldPoint = data[lastCluster].getLastAddedPoint();
+      dist = current.getDistance(oldPoint);
+			//ROS_INFO_STREAM("dist : "<<dist);
+			//ROS_INFO_STREAM("Current : " << current.getX() <<" " << current.getY()<< " Old : "<< oldPoint.getX() <<" " << oldPoint.getY());
       if (dist>epsilon){
-        // adding in new cluster
+				// adding in new cluster
+				lastCluster++;
+				Cluster newCluster = Cluster(lastCluster, current);
+				data.push_back(newCluster);
+				ROS_INFO_STREAM("NEW CLUSTER : " << dist);
+				//ROS_INFO_STREAM("OK3");
       }
       else{
         //adding in the last cluster
         data[lastCluster].addPoint(current);
+				//ROS_INFO_STREAM("ADD To cluster : "<<lastCluster);
+
+				//ROS_INFO_STREAM("OK4");
         //data.push_back(Point(x,y,0));
 
       }
@@ -58,6 +73,36 @@ void changementRepere(vector<Cluster> data,const sensor_msgs::LaserScan& msg, fl
     }
 
   }
+	int nbCluster = data.size();
+	ROS_INFO_STREAM("___________________Nb_cluster : " << nbCluster);
+	for (int j=0; j<nbCluster; j++){
+		 Point centre = data[j].getCircleCenter();
+		 ROS_INFO_STREAM("Centre : "<< centre.getX()*1000 << " ; " <<centre.getY()*1000 <<
+		 								" CSize : "<<data[j].getTotalNBPoints() << " Rayon : " << data[j].getRayon());
+	}
+	data.erase(data.begin());
+	bool changement = true;
+	while(changement){
+		int k = 0;
+		changement = false;
+		while (k < data.size()){
+			if (data[k].getTotalNBPoints() < 6){
+				data.erase(data.begin() + k);
+				changement = true;
+				break;
+			}
+			k++;
+		}
+	}
+	nbCluster = data.size();
+	ROS_INFO_STREAM("____ELIM SURPLUS____Nb_cluster : " << nbCluster);
+	for (int j=0; j<nbCluster; j++){
+		 Point centre = data[j].getCircleCenter();
+		 ROS_INFO_STREAM("Centre : "<< centre.getX()*1000 << " ; " <<centre.getY()*1000 <<
+										" CSize : "<<data[j].getTotalNBPoints() << " Rayon : " << data[j].getRayon());
+	}
+
+	data.clear();
 }
 
 //process à chaque message
@@ -68,10 +113,11 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
   //Cluster cluster0 = Cluster(0);
   vector<Cluster> data;
   float tableau_donnees[rows][2];
-  changementRepere(data, msg, 2,3);
-  for (int i = 0; i < rows ; i++){
-      ROS_INFO_STREAM(i << " : x = ");// << data.at(i));// << " y = " << tableau_donnees[i][1]);
-  }
+  changementRepere(data, msg, 0.5,0.5);
+  //for (int i = 0; i < rows ; i++){
+    //  ROS_INFO_STREAM(i << " : x = ");// << data.at(i));// << " y = " << tableau_donnees[i][1]);
+	//}
+	data.clear();
   //clustering(tableau_donnees, rows);
   /*for (int i = 0 ; i<rows; i++){
     if (tableau_donnees[i][0] != 0 && tableau_donnees[i][1] != 0){
