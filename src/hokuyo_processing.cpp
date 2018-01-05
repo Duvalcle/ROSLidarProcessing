@@ -28,6 +28,8 @@
 
 using namespace std;
 
+int fd;
+
 
 int set_interface_attribs(int fd, int speed)
 {
@@ -133,6 +135,7 @@ void changementRepere(vector<Cluster> data,const sensor_msgs::LaserScan& msg, fl
 
 	data.erase(data.begin());
 	bool changement = true;
+	
 	while(changement){
 		int k = 0;
 		changement = false;
@@ -146,11 +149,20 @@ void changementRepere(vector<Cluster> data,const sensor_msgs::LaserScan& msg, fl
 		}
 	}
 	int nbCluster = data.size();
+	int wlen;
+	std::stringstream sstm;
 	ROS_INFO_STREAM("____ELIM SURPLUS____Nb_cluster : " << nbCluster);
 	for (int j=0; j<nbCluster; j++){
 		 Point centre = data[j].getCircleCenter();
-		 ROS_INFO_STREAM("Centre : "<< centre.getX()*1000 << " ; " <<centre.getY()*1000 <<
-										" CSize : "<<data[j].getTotalNBPoints() << " Rayon : " << data[j].getRayon());
+		sstm << "Centre : "<< centre.getX() << " ; " <<centre.getY() <<" CSize : "<< data[j].getTotalNBPoints() << " Rayon : " << data[j].getRayon() << "\n";
+		 std::string stringcopy = sstm.str();
+		 ROS_INFO_STREAM(stringcopy);
+		wlen = write(fd,stringcopy.c_str(),stringcopy.size());
+		if (wlen!=stringcopy.size()){
+			printf("error from writing : %d, %d\n",wlen,errno);
+		}
+		tcdrain(fd); // delay for output
+		sstm.str("");
 	}
 
 	data.clear();
@@ -170,8 +182,8 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 
 int main(int argc, char **argv){
 	// *** Etablissement liaison série *** //
-	char portname[] = "/dev/ttyACM0";
- 	int fd, wlen; //File Descriptor and writen legnth
+	char portname[] = "/dev/ttyACM1";
+ 	int wlen; //File Descriptor and writen legnth
 	if (fd < 0) {
 		printf("Error opening %s: %s\n", portname, strerror(errno));
 		return -1;
@@ -183,11 +195,14 @@ int main(int argc, char **argv){
 	set_mincount(fd, 0); /* set to pure timed read */
 
  	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
-
-
+	wlen = write(fd,"INIT ICI\n",9);
+	if (wlen!=9){
+		printf("error from writing : %d, %d\n",wlen,errno);
+	}
+	tcdrain(fd); // delay for output
 	// *** ROS init and launching *** //
 	ros::init(argc, argv, "hokuyo_proceessing_Robotik_UTT");
-  ros::NodeHandle n;
-  ros::Subscriber sub = n.subscribe("scan",1000, scanCallBack);
-  ros::spin();
+	ros::NodeHandle n;
+	ros::Subscriber sub = n.subscribe("scan",1000, scanCallBack);
+	ros::spin();
 }
