@@ -1,6 +1,4 @@
-
-#include "serial.h"
-
+/* The prototype is in the cpp file */
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>

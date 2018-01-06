@@ -7,20 +7,16 @@
 #include <string.h>
 #include <termios.h>
 #include <stdio.h>
-//#include <urg_c/urg_sensor.h>
 #include <urg_node/Status.h>
 #include <urg_node/urg_node_driver.h>
 #include <typeinfo>
 #include <vector>
 #include <math.h>
-//#include "Point.h"
 
 #include "Cluster.hpp"
-#include "serial.h"
 
-// #define 0_RDWR 0
-// #define 0_NOCTTY 0
-// #define 0_SYNC 0
+
+
 #define SIZE_BUF 2
 #if defined _BSD_SOURCE || defined _SVID_SOURCE
  #define __USE_MISC     1
@@ -28,63 +24,11 @@
 
 using namespace std;
 
-int fd;
-
-
-int set_interface_attribs(int fd, int speed)
-{
-    struct termios tty;
-
-    if (tcgetattr(fd, &tty) < 0) {
-//        printf("Error from tcgetattr: %s\n", strerror(errno));
-        printf("Error from tcgetattr");
-        return -1;
-    }
-
-    cfsetospeed(&tty, (speed_t)speed);
-    cfsetispeed(&tty, (speed_t)speed);
-
-    tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;         /* 8-bit characters */
-    tty.c_cflag &= ~PARENB;     /* no parity bit */
-    tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-    tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
-
-    /* setup for non-canonical mode */
-    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-    tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-    tty.c_oflag &= ~OPOST;
-
-    /* fetch bytes as they become available */
-    tty.c_cc[VMIN] = 1;
-    tty.c_cc[VTIME] = 1;
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-//        printf("Error from tcsetattr: %s\n", strerror(errno));
-          printf("Error from tcgetattr");
-          return -1;
-    }
-    return 0;
-}
-
-void set_mincount(int fd, int mcount)
-{
-    struct termios tty;
-
-    if (tcgetattr(fd, &tty) < 0) {
-        //printf("Error tcgetattr: %s\n", strerror(errno));
-        printf("Error from tcgetattr");
-        return;
-    }
-
-    tty.c_cc[VMIN] = mcount ? 1 : 0;
-    tty.c_cc[VTIME] = 5;        /* half second timer */
-
-    if (tcsetattr(fd, TCSANOW, &tty) < 0)
-        //printf("Error tcsetattr: %s\n", strerror(errno));
-        printf("Error from tcgetattr");
-
+int fd; //File descriptor to open serial
+// prototype for linking serial.c Library
+extern "C"{
+  int set_interface_attribs(int fd, int speed);
+  void set_mincount(int fd, int mcount);
 }
 
 //Pour la table de jeu, sizeCutX = 2050 et sizeCutY = 3050
@@ -135,7 +79,7 @@ void changementRepere(vector<Cluster> data,const sensor_msgs::LaserScan& msg, fl
 
 	data.erase(data.begin());
 	bool changement = true;
-	
+
 	while(changement){
 		int k = 0;
 		changement = false;
@@ -182,7 +126,7 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 
 int main(int argc, char **argv){
 	// *** Etablissement liaison série *** //
-	char portname[] = "/dev/ttyACM1";
+	char portname[] = "/dev/ttyACM1"; //Port ACM1 le zigbee doit être connecté après l'Hokuyo(ttyACM0) à la raspberry
  	int wlen; //File Descriptor and writen legnth
 	if (fd < 0) {
 		printf("Error opening %s: %s\n", portname, strerror(errno));
