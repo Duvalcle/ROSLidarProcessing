@@ -6,7 +6,10 @@
 #include <unistd.h>
 #include <stdio.h>
 
-
+/**
+ * file from stackoverflow topic
+ * https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
+ */
 int set_interface_attribs(int fd, int speed)
 {
     struct termios tty;
