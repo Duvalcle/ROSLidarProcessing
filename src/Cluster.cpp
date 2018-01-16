@@ -57,6 +57,12 @@ int Cluster::getID(){
   return id_cluster;
 }
 
+void Cluster::resetID(int id){
+  for(int i = 0; i < points.size() ; i++){
+    points[i].setIDCluster(id);
+  }
+}
+
 // return the width of the cluster
 double Cluster::getRay(){
   return ray;
