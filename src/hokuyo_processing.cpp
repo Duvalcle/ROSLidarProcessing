@@ -69,7 +69,7 @@ void axesChangingAndClustering(vector<Cluster> *data,const sensor_msgs::LaserSca
         currentPoint.setIDCluster(currentCluster); // updating the id of the cluster for the point
 				Cluster newCluster = Cluster(currentCluster, currentPoint); // Creating a new Cluster with the current point added in it
 				data->push_back(newCluster); // adding the new Cluster to the structured vector data
-				ROS_INFO_STREAM("NEW CLUSTER : " << dist); // printing log to check if all is alright
+				//ROS_INFO_STREAM("NEW CLUSTER : " << dist); // printing log to check if all is alright
       }
     }
   }
@@ -95,25 +95,25 @@ void serialWrite(Point point, float ray){
          unsigned char bytes[sizeof(int)];
   } dataI;
   //Init the written string in the serial port
-  char finalChar[9];
-  //This is where you can modify the send data
+  char finalChar[8];
+  //This is where you can modify the data to be send
   dataI.val = id; //update dataI to take the ID
-  finalChar[0] = dataI.bytes[1]; //Keeping just the LSByte : no more than 256 clusters in our application
-  finalChar[1] = dataI.bytes[0];
+  //finalChar[0] = dataI.bytes[1];
+  finalChar[0] = dataI.bytes[0]; //Keeping just the LSByte : no more than 256 clusters in our application
   dataF.val = x; //update dataF to take x
-  finalChar[2] = dataF.bytes[3]; //2 most significant bytes for x
-  finalChar[3] = dataF.bytes[2];
+  finalChar[1] = dataF.bytes[3]; //2 most significant bytes for x
+  finalChar[2] = dataF.bytes[2];
   dataF.val = y; //update dataF to take y
-  finalChar[4] = dataF.bytes[3];//2 most significant bytes for y
-  finalChar[5] = dataF.bytes[2];
+  finalChar[3] = dataF.bytes[3];//2 most significant bytes for y
+  finalChar[4] = dataF.bytes[2];
   dataF.val = ray; //update dataF to take ray
-  finalChar[6] = dataF.bytes[3];//2 most significant bytes for the size of the object
-  finalChar[7] = dataF.bytes[2];
-  finalChar[8] = '\n';
+  finalChar[5] = dataF.bytes[3];//2 most significant bytes for the size of the object
+  finalChar[6] = dataF.bytes[2];
+  finalChar[7] = '\n';
 
-  wlen = write(fd, finalChar, 9); //writing to the serial device
+  wlen = write(fd, finalChar, 8); //writing to the serial device
   tcdrain(fd); // delay for output
-  ROS_INFO_STREAM("END transmition");
+  ROS_INFO("END transmition");
 }
 
 
@@ -130,11 +130,11 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
   vector<Cluster> *data = new vector<Cluster>; // creating the structure of the data wich will be processed
   axesChangingAndClustering(data, msg, 0.5,0.5); // calling previous function
   int nbCluster = data->size(); //Checking the number of objects which has been detected
-  ROS_INFO_STREAM("___________________Nb_cluster : " << nbCluster);
+  //ROS_INFO_STREAM("___________________Nb_cluster : " << nbCluster);
   for (int j=0; j<nbCluster; j++){
      Point centre = data->operator[](j).getCircleCenter(); // get the center of theses clusters
-     ROS_INFO_STREAM("Centre : "<< centre.getX()*1000 << " ; " <<centre.getY()*1000 <<
-                    " CSize : " << data->operator[](j).getTotalNBPoints() << " Rayon : " << data->operator[](j).getRay());
+    // ROS_INFO_STREAM("Centre : "<< centre.getX()*1000 << " ; " <<centre.getY()*1000 <<
+    //                " CSize : " << data->operator[](j).getTotalNBPoints() << " Rayon : " << data->operator[](j).getRay());
   }
 
   // Getting rid of extra cluster
@@ -156,6 +156,7 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 		}
 	}
 	nbCluster = data->size(); // update the number of objects detected
+  //update the ID of points in the cluster
   for (int i = 0 ; i < nbCluster ; i++){
     for (int j = 0 ;  j < data->operator[](i).getTotalNBPoints() ; j++){
       data->operator[](i).resetID(i+1);
@@ -163,12 +164,12 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
   }
 
   int wlen; // serial write length
-	ROS_INFO_STREAM("____No More Extras____Nb_cluster : " << nbCluster);
+	//ROS_INFO_STREAM("____No More Extras____Nb_cluster : " << nbCluster);
   //Transmitting infos to Log and serial
-	for (int j=0; j<nbCluster; j++){
-		 Point centre = data->operator[](j).getCircleCenter(); //getting the centre of the cluster
-     ROS_INFO_STREAM("Centre : " + centre.getX() + " ; " + centre.getY() + " CSize : "+data->operator[](j).getTotalNBPoints() +" Ray : " + data->operator[](j).getRay()));
-     float ray = data->operator[](j).getRay();
+	for (int k=0; k<nbCluster; k++){
+		 Point centre = data->operator[](k).getCircleCenter(); //getting the centre of the cluster
+     //ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << data->operator[](j).getRay()); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
+     float ray = data->operator[](k).getRay();
      serialWrite(centre, ray);
 	}
 
@@ -176,30 +177,31 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 }
 
 int main(int argc, char **argv){
-	// *** Etablissement liaison série *** //
-	char portname[] = "/dev/ttyACM1"; //Port ACM1 le zigbee doit être connecté après l'Hokuyo(ttyACM0) à la raspberry
+  ros::init(argc, argv, "hokuyo_processing_node");
+	ros::NodeHandle n;
+  // *** Etablissement liaison série *** //
+	char portname[] = "/dev/ttyACM2"; //Port ACM1 le zigbee doit être connecté après l'Hokuyo(ttyACM0) à la raspberry
  	int wlen; //File Descriptor and writen legnth
 	if (fd < 0) {
-		ROS_INFO_STREAM("Error opening "+ portname+": "+ strerror(errno));
+		ROS_INFO("Error opening ", strerror(errno));
 		return -1;
 	}
 	else if (fd > 0) {
-		ROS_INFO_STREAM("Serial Port "+portname +"open successfully \n");
+	//	ROS_INFO_STREAM("Serial Port " << portname << "open successfully \n");
 	}
 	set_interface_attribs(fd, B115200);
 	set_mincount(fd, 0); /* set to pure timed read */
 
- 	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
-	wlen = write(fd,"INIT ICI\n",9);
-	if (wlen!=9){
-		ROS_INFO_STREAM("Serial : error from writing : "+wlen": "+errno);
-	}
-	tcdrain(fd); // delay for output
-	// *** ROS init and launching *** //
+	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
+	//wlen = write(fd,"INIT ICI\n",9);
+	// if (wlen!=9){
+	// 	ROS_INFO_STREAM("Serial : error from writing : " << wlen << ": " << errno);
+	// }
+	//tcdrain(fd); // delay for output
+	//*** ROS init and launching *** //
   Point point = Point(0.001,0.002,5);
-  serialWrite(point, 0.003);
-  ros::init(argc, argv, "hokuyo_proceessing_Robotik_UTT");
-	ros::NodeHandle n;
+  //serialWrite(point, 0.003);
+
   //subscribe to topic scan, allow buffering 1000msg before ignoring them, calling scanCallBack function when a message is received
 	ros::Subscriber sub = n.subscribe("scan",1000, scanCallBack);
 	ros::spin();
