@@ -1,29 +1,12 @@
-/*
-  Serial Event example
- 
- When new serial data arrives, this sketch adds it to a String.
- When a newline is received, the loop prints the string and 
- clears it.
- 
- A good test for this is to try it with a GPS receiver 
- that sends out NMEA 0183 sentences. 
- 
- Created 9 May 2011
- by Tom Igoe
- 
- This example code is in the public domain.
- 
- http://www.arduino.cc/en/Tutorial/SerialEvent
- 
- */
- 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
-int flag = 0;
+int index = 0; //index the readen data; [0-7] correspond to switch case
+//Union data to link representation of float
 union floatX_bytes {
      float val;
      unsigned char bytes[sizeof(float)];
 } dataX,dataY,dataRay;
+//Union data to link representation of int
 union int_bytes {
      int val;
      unsigned char bytes[sizeof(int)];
@@ -33,20 +16,11 @@ void setup() {
   // initialize serial:
   Serial.begin(57600);
   initData();
-  // reserve 200 bytes for the inputString:
-  //inputString.reserve(200);
 }
 
 void loop() {
-  // print the string when a newline arrives:
- /* while (Serial.available()) {
-    // get the new byte:
-    char inChar = (char)Serial.read(); 
-   Serial.print(inChar);
-  }
-  */
   if (stringComplete) {
-    //Serial.println(inputString);
+    //Ressend data over Serial to check decoding
     Serial.print("Id : ");
     Serial.print(dataI.val);
     Serial.print("|x : ");
@@ -63,6 +37,9 @@ void loop() {
   }
 }
 
+/*
+  Init Union data structure for another set of data
+*/
 void initData(){
   dataX.val = 0;
   dataY.val = 0;
@@ -81,9 +58,9 @@ void serialEvent() {
   while (Serial.available()) {
     // get the new byte:
     unsigned char inChar = (unsigned char)Serial.read(); 
-    //Serial.println(inChar);
-    // add it to the inputString:
-    switch (flag){
+    //Switch between cases of byte reception (if it is the first or the last one...
+    //Respect same spec as in ../../src/hokuyo_processing.cpp
+    switch (index){
     case 0:
       dataI.bytes[0]=inChar;
       break;
@@ -106,15 +83,11 @@ void serialEvent() {
       dataRay.bytes[2]=inChar;
       break;
     }
-    flag++;
-    //inputString += inChar;
-    
-    //Serial.println("received");
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
+    index++;
+    //end of data reception
     if (inChar == '\n') {
       stringComplete = true;
-      flag = 0;
+      index = 0;
     } 
   }
 }

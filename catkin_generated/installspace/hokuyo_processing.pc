@@ -1,8 +1,0 @@
-prefix=/home/kyrie/catkin_ws/install
-
-Name: hokuyo_processing
-Description: Description of hokuyo_processing
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/kyrie/catkin_ws/install/lib 
-Requires: 
