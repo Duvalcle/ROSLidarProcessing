@@ -31,7 +31,7 @@ union int_bytes {
 
 void setup() {
   // initialize serial:
-  Serial.begin(115200);
+  Serial.begin(57600);
   initData();
   // reserve 200 bytes for the inputString:
   //inputString.reserve(200);

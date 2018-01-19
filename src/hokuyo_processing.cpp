@@ -79,7 +79,7 @@ void axesChangingAndClustering(vector<Cluster> *data,const sensor_msgs::LaserSca
  * Function designed for writing values in serial port to communicate over zigbee
  */
 void serialWrite(Point point, float ray){
-  float x = point.getX();
+ /* float x = point.getX();
   float y = point.getY();
   int id = point.getIDCluster(); //Cluster Id it belongs to
   int wlen; // serial write length
@@ -95,7 +95,7 @@ void serialWrite(Point point, float ray){
          unsigned char bytes[sizeof(int)];
   } dataI;
   //Init the written string in the serial port
-  char finalChar[8];
+  char finalChar[7];
   //This is where you can modify the data to be send
   dataI.val = id; //update dataI to take the ID
   //finalChar[0] = dataI.bytes[1];
@@ -109,11 +109,32 @@ void serialWrite(Point point, float ray){
   dataF.val = ray; //update dataF to take ray
   finalChar[5] = dataF.bytes[3];//2 most significant bytes for the size of the object
   finalChar[6] = dataF.bytes[2];
-  finalChar[7] = '\n';
+ // finalChar[7] = '\n';
 
-  wlen = write(fd, finalChar, 8); //writing to the serial device
+  wlen = write(fd, finalChar, 7); //writing to the serial device
   tcdrain(fd); // delay for output
-  ROS_INFO("END transmition");
+  ROS_INFO("END transmission");
+  
+ */	int wlen;
+	uint8_t finalChar[7]={0,0,0,0,0,0,0};
+  	int x = (int)(point.getX()*1000);
+ 	int y = (int)(point.getY()*1000);
+ 	int R = (int)(ray*1000);
+ 	int id = point.getIDCluster(); //Cluster Id it belongs to
+//int id = 3;
+	finalChar[0]=id;
+	finalChar[2]= x;  
+	finalChar[1]=(uint16_t) x>>8;
+	finalChar[4]=y;
+	finalChar[3]=(uint16_t) y>>8;
+	finalChar[6]=R;  
+	finalChar[5]=(uint16_t) R>>8;
+	ROS_INFO_STREAM("Index : "<< id <<"\t x : "<< x << "\t y : " << y << "\t R : "<<R);
+	for (int i=0;i<7 ; i++){
+		ROS_INFO_STREAM("finalChar "<< i <<" : "<<std::hex<<static_cast<int>(finalChar[i]));
+	}
+   wlen = write(fd, finalChar, 7); //writing to the serial device
+  tcdrain(fd); // delay for output
 }
 
 
@@ -168,9 +189,11 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
   //Transmitting infos to Log and serial
 	for (int k=0; k<nbCluster; k++){
 		 Point centre = data->operator[](k).getCircleCenter(); //getting the centre of the cluster
-     //ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << data->operator[](j).getRay()); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
+     //Point centre = Point(1,2,3);
+     ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << data->operator[](k).getRay()); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
      float ray = data->operator[](k).getRay();
      serialWrite(centre, ray);
+     usleep(25000);
 	}
 
 	data->clear(); //cleaning the vector for the next callback
@@ -180,19 +203,19 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "hokuyo_processing_node");
 	ros::NodeHandle n;
   // *** Etablissement liaison série *** //
-	char portname[] = "/dev/ttyACM2"; //Port ACM1 le zigbee doit être connecté après l'Hokuyo(ttyACM0) à la raspberry
+	char portname[] = "/dev/ttyUSB0"; //Port ACM1 le zigbee doit être connecté après l'Hokuyo(ttyACM0) à la raspberry
  	int wlen; //File Descriptor and writen legnth
+	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
-		ROS_INFO("Error opening ", strerror(errno));
+		ROS_INFO_STREAM("Error opening " << strerror(errno));
 		return -1;
 	}
 	else if (fd > 0) {
 	//	ROS_INFO_STREAM("Serial Port " << portname << "open successfully \n");
 	}
-	set_interface_attribs(fd, B115200);
+	set_interface_attribs(fd, B57600);
 	set_mincount(fd, 0); /* set to pure timed read */
 
-	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
 	//wlen = write(fd,"INIT ICI\n",9);
 	// if (wlen!=9){
 	// 	ROS_INFO_STREAM("Serial : error from writing : " << wlen << ": " << errno);
@@ -203,6 +226,6 @@ int main(int argc, char **argv){
   //serialWrite(point, 0.003);
 
   //subscribe to topic scan, allow buffering 1000msg before ignoring them, calling scanCallBack function when a message is received
-	ros::Subscriber sub = n.subscribe("scan",1000, scanCallBack);
+	ros::Subscriber sub = n.subscribe("scan",1, scanCallBack);
 	ros::spin();
 }
