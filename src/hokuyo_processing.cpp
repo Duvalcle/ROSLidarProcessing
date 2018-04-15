@@ -70,15 +70,15 @@ void axesChangingAndClustering(vector<Cluster> *data,const sensor_msgs::LaserSca
       data->operator[](0).addPoint(nullPoint);// "operator[]" is because we manipulate a pointer
     }
     else{
-      Point currentPoint = Point(x,y,currentCluster); // creating a point from calculated {x,y}, set ID cluster to currentCluster by default
-			Point oldPoint = data->operator[](currentCluster).getLastAddedPoint(); // getting last point seen
-      dist = currentPoint.getDistance(oldPoint);// calculate distance between previous point and current
-      // if the distance is two high between 2 points it means that the 2 points do not belong to the same object
-      if (dist<epsilon){
-        //adding the point to the current cluster. This point is a part of the current seen object
-        data->operator[](currentCluster).addPoint(currentPoint);
-      }
-      else{
+		Point currentPoint = Point(x,y,currentCluster); // creating a point from calculated {x,y}, set ID cluster to currentCluster by default
+		Point oldPoint = data->operator[](currentCluster).getLastAddedPoint(); // getting last point seen
+		dist = currentPoint.getDistance(oldPoint);// calculate distance between previous point and current
+		// if the distance is two high between 2 points it means that the 2 points do not belong to the same object
+		if (dist<epsilon){
+			//adding the point to the current cluster. This point is a part of the current seen object
+			data->operator[](currentCluster).addPoint(currentPoint);
+		}
+		else{
         // adding in a new cluster (ie : creating an object)
 			currentCluster++; // updating the number of the current cluster
 			currentPoint.setIDCluster(currentCluster); // updating the id of the cluster for the point
@@ -99,7 +99,7 @@ void serialWrite(Point point, float ray){
  	int y = (int)(point.getY()*1000); // Cast y position from Float to int (in millimeters)
  	int R = (int)(ray*1000); // Cast Ray from Float to int (in millimeters)
  	int id = point.getIDCluster(); //Cluster Id it belongs to
-	//Composition of the frame. Some bytes are written befor others to avoid overwrite
+	//Composition of the frame. Some bytes are written before others to avoid overwrite
 	finalChar[0] = ENNEMI_POS;
 	finalChar[1] = id;
 	finalChar[3] = x;
@@ -109,10 +109,10 @@ void serialWrite(Point point, float ray){
 	finalChar[7] = R;
 	finalChar[6] = (uint16_t) R>>8;//Cast to take the second byte of Ray the int
 	ROS_INFO_STREAM("[SerialWrite] Mode "<< ENNEMI_POS << "\t Index : "<< id <<"\t x : "<< x << "\t y : " << y << "\t R : "<<R); //What is going to be send
-	//wlen = write(fd, finalChar, 7); //writing to the serial device
-	//if (wlen!=7){
-	//	ROS_INFO_STREAM("[SerialWrite] error from writing : " << wlen << ": " << errno);
-	//}
+	wlen = write(fd, finalChar, 8); //writing to the serial device
+	if (wlen!=8){
+		ROS_INFO_STREAM("[SerialWrite] error from writing : " << wlen << ": " << errno);
+	}
 	tcdrain(fd); // delay for output
 }
 
@@ -134,6 +134,9 @@ void beautifyClusters(vector<Cluster> *data){
 			}
 			k++;
 		}
+	}
+	for (int i = 0; i < data->size() ; i++){
+		data->operator[](i).resetID(ID_UNKNOWN);
 	}
 }
 
@@ -209,6 +212,7 @@ void classifier(vector<Cluster> *data){
  */
 void scanCallBack(const sensor_msgs::LaserScan& msg)
 {
+	ROS_INFO_STREAM("callback");
 	float sizeCutX = 0.5;
 	float sizeCutY = 0.5;
 	vector<Cluster> *data = new vector<Cluster>; // creating the structure of the data wich will be processed
@@ -223,9 +227,10 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 	//update the ID of points in the cluster
 	for (int i = 0 ; i < nbCluster ; i++){
 		for (int j = 0 ;  j < data->operator[](i).getTotalNBPoints() ; j++){
-			data->operator[](i).resetID(i+1);
+			data->operator[](i).resetID(ID_UNKNOWN);
 		}
 	}
+	//classifier(data);
 	/**
 	* Section to uncomment to send every center Points
 	*
@@ -288,5 +293,6 @@ int main(int argc, char **argv){
 	//*** ROS launching *** //
   //subscribe to topic scan, allow buffering 1000msg before ignoring them, calling scanCallBack function when a message is received
 	ros::Subscriber sub = n.subscribe("scan",1, scanCallBack);		
+	ROS_INFO_STREAM("subcribed");
 	ros::spin();
 }
