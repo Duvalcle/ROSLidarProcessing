@@ -98,7 +98,7 @@ void serialWrite(Point point, float ray){
  	int R = (int)(ray*1000); // Cast Ray from Float to int (in millimeters)
  	int id = point.getIDCluster(); //Cluster Id it belongs to
 	//Composition of the frame. Some bytes are written befor others to avoid overwrite
-	finalChar[0] = ENEMI_POS;
+	finalChar[0] = ENNEMI_POS;
 	finalChar[1] = id;
 	finalChar[3] = x;
 	finalChar[2] = (uint16_t) x>>8; //Cast to take the second byte of the x position int
@@ -106,7 +106,7 @@ void serialWrite(Point point, float ray){
 	finalChar[4] = (uint16_t) y>>8; //Cast to take the second byte of the y position int
 	finalChar[7] = R;
 	finalChar[6] = (uint16_t) R>>8;//Cast to take the second byte of Ray the int
-	ROS_INFO_STREAM("[SerialWrite] Mode "<< mode << "\t Index : "<< id <<"\t x : "<< x << "\t y : " << y << "\t R : "<<R); //What is going to be send
+	ROS_INFO_STREAM("[SerialWrite] Mode "<< ENNEMI_POS << "\t Index : "<< id <<"\t x : "<< x << "\t y : " << y << "\t R : "<<R); //What is going to be send
 	wlen = write(fd, finalChar, 7); //writing to the serial device
 	if (wlen!=7){
 		ROS_INFO_STREAM("[SerialWrite] error from writing : " << wlen << ": " << errno);
@@ -148,23 +148,24 @@ void classifier(vector<Cluster> *data){
 	int nbClusterCurrent = data->size(); //Checking the number of objects which has been detected
 	int nbClusterPrevious = previousData->size(); //Checking the number of objects which has been detected
 	int previousID;
-	Point reference = new Point(0,0,0);
-	Cluster currentCluster;
+	Point reference = Point(0,0,0);
+	Cluster currentCluster = data->operator[](0);
+
 	if (nbClusterPrevious == 0){
 		//current data is the only data available, tracking off, creating IDs
 		//list the elements of the vector
 		for (int i = 0; i<nbClusterCurrent; i++){
 			//parcours de la liste ancienne
-			currentCluster = data->operator[](i)
+			currentCluster = data->operator[](i);
 			Point currentCenter = currentCluster.getCircleCenter();		
 			//Si rayon obstacle environ égal à size robot :
 			if (currentCluster.getRay() >= RAY_ROBOT_MIN && currentCluster.getRay() <= RAY_ROBOT_MAX){
 				// si obstacle loin (supérieur à 1.50m : robot ami
 				if (currentCenter.getDistance(reference) > 1500){
-					currentCluster.resetID(ID_FRIEND_BIG_ROBOT)
+					currentCluster.resetID(ID_FRIEND_BIG_ROBOT);
 				}
 				// Sinon robot ennemi
-				else if(currentCluster.getX() > 0 && currentCluster.getY()){
+				else if(currentCenter.getX() > 0 && currentCenter.getY()){
 					if(currentCenter.getIDCluster() == ID_ENNEMI_ROBOT_1){
 						currentCluster.resetID(ID_ENNEMI_ROBOT_2);
 					}
@@ -173,14 +174,13 @@ void classifier(vector<Cluster> *data){
 					}
 				}
 				else{
-					currentCluster.resetID(ID_UNKNOWN):
+					currentCluster.resetID(ID_UNKNOWN);
 				}	 
 			}
-			
-			
-		
-		// Sinon 
-			// Object inconnu
+			else{
+				// Sinon Object inconnu
+				currentCluster.resetID(ID_UNKNOWN);
+			}
 		}
 		
 		
@@ -192,15 +192,14 @@ void classifier(vector<Cluster> *data){
 		for (int i = 0; i<nbClusterCurrent; i++){
 			//parcours de la liste ancienne
 			Point currentCenter = data->operator[](i).getCircleCenter();
-			for (j = 0; j<nbClusterPrevious; j++){
+			for (int j = 0; j<nbClusterPrevious; j++){
 				Point previousCenter = data->operator[](j).getCircleCenter(); // get the center of theses clusters
-				if (previousCenter.getDistance(currentCluster) < TRACKING_TOLERENCE){
-					data->operator[](i).setIDCluster(data->operator[](j).getID())
+				if (previousCenter.getDistance(currentCenter) < TRACKING_TOLERENCE){
+					data->operator[](i).resetID(data->operator[](j).getID());
 					break;
-				}
-				
+				}	
+			}		
 		}
-			
 	}
 }
 
@@ -259,13 +258,13 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 			clusterMin = currentCluster; // register the nearest object
 		}
 	}
-	*/
+	
 	float ray = clusterMin.getRay();
 	Point centre = clusterMin.getCircleCenter(); // Get the center of the nearest object
 	ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << ray << "Distance : " << mini); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
 	serialWrite(centre, ray); //Write to the arduino in serial
 	usleep(25000); // Delay for Arduino node to understand the frame
-
+*/
 	//*** End of section ***//
 	previousData = data;
 	data->clear(); //cleaning the vector for the next callback
