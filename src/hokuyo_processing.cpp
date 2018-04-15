@@ -23,6 +23,8 @@
 #define ID_STRUCTURE			5
 #define ID_UNKNOWN				6
 
+#define SLEEPING_TIME_BTW2FRAME	25000 //µs
+
 #define SIZE_BUF 2
 #if defined _BSD_SOURCE || defined _SVID_SOURCE
  #define __USE_MISC     1
@@ -107,10 +109,10 @@ void serialWrite(Point point, float ray){
 	finalChar[7] = R;
 	finalChar[6] = (uint16_t) R>>8;//Cast to take the second byte of Ray the int
 	ROS_INFO_STREAM("[SerialWrite] Mode "<< ENNEMI_POS << "\t Index : "<< id <<"\t x : "<< x << "\t y : " << y << "\t R : "<<R); //What is going to be send
-	wlen = write(fd, finalChar, 7); //writing to the serial device
-	if (wlen!=7){
-		ROS_INFO_STREAM("[SerialWrite] error from writing : " << wlen << ": " << errno);
-	}
+	//wlen = write(fd, finalChar, 7); //writing to the serial device
+	//if (wlen!=7){
+	//	ROS_INFO_STREAM("[SerialWrite] error from writing : " << wlen << ": " << errno);
+	//}
 	tcdrain(fd); // delay for output
 }
 
@@ -182,10 +184,6 @@ void classifier(vector<Cluster> *data){
 				currentCluster.resetID(ID_UNKNOWN);
 			}
 		}
-		
-		
-		//Identification of our 1st robot :
-		
 	}
 	else{
 		//parcours de la liste current
@@ -232,19 +230,20 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 	* Section to uncomment to send every center Points
 	*
 	*/
+	
 	for (int k=0; k<nbCluster; k++){
 	 	Point centre = data->operator[](k).getCircleCenter(); //getting the centre of the cluster
-		ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << data->operator[](k).getRay()); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
+		//ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << data->operator[](k).getRay()); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
 		float ray = data->operator[](k).getRay();
 		serialWrite(centre, ray);
-		usleep(25000);
+		usleep(SLEEPING_TIME_BTW2FRAME);
 	 }
 
 	/**
 	* Section to comment to send every center Points
 	* and not only the nearest cluster
 	*/
-	/*Point reference = Point(0,0,0);
+	/**Point reference = Point(0,0,0);
 	float mini = 50000; // To be sure that the distance will be inferior than this number
 	Cluster clusterMin = data->operator[](0);
 	//Calculate nearest object from reference
@@ -263,7 +262,7 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 	Point centre = clusterMin.getCircleCenter(); // Get the center of the nearest object
 	ROS_INFO_STREAM("ID : "<< centre.getIDCluster() << "Centre : " << centre.getX() << " ; " << centre.getY() <<  " Ray : " << ray << "Distance : " << mini); //" CSize : " << data->operator[](j).getTotalNBPoints() <<
 	serialWrite(centre, ray); //Write to the arduino in serial
-	usleep(25000); // Delay for Arduino node to understand the frame
+	usleep(SLEEPING_TIME_BTW2FRAME); // Delay for Arduino node to understand the frame
 */
 	//*** End of section ***//
 	previousData = data;
@@ -271,14 +270,14 @@ void scanCallBack(const sensor_msgs::LaserScan& msg)
 }
 
 int main(int argc, char **argv){
-  ros::init(argc, argv, "hokuyo_processing_node");
+	ros::init(argc, argv, "hokuyo_processing_node");
 	ros::NodeHandle n;
   // *** Etablissement liaison série *** //
 	char portname[] = "/dev/ttyUSB0"; //nom de port à changer en fonction du driver utilisé par la carte Arduino
  	int wlen; //File Descriptor and writen legnth
 	fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
-		ROS_INFO_STREAM("Error opening " << strerror(errno));
+		ROS_INFO_STREAM("ERROR : Is Arduino node connected Serial ? " << strerror(errno));
 		return -1;
 	}
 	else if (fd > 0) {
@@ -288,6 +287,6 @@ int main(int argc, char **argv){
 	set_mincount(fd, 0); /* set to pure timed read */
 	//*** ROS launching *** //
   //subscribe to topic scan, allow buffering 1000msg before ignoring them, calling scanCallBack function when a message is received
-	ros::Subscriber sub = n.subscribe("scan",1, scanCallBack);
+	ros::Subscriber sub = n.subscribe("scan",1, scanCallBack);		
 	ros::spin();
 }
