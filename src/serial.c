@@ -1,4 +1,4 @@
-/* The prototype is in the cpp file */
+/* The prototype is in hokuyo_processing.cpp file */
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
